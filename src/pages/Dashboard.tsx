@@ -50,6 +50,15 @@ export default function Dashboard() {
     }
   }, [detectionEnabled]);
 
+  const loadViolations = useCallback(async () => {
+    try {
+      const violationsData = await violationsAPI.getAll().catch(() => []);
+      setViolations(violationsData);
+    } catch (error) {
+      console.error('Error refreshing dashboard warnings:', error);
+    }
+  }, []);
+
   // Load data from API (used on mount and by manual refresh)
   const loadData = useCallback(async () => {
     try {
@@ -98,11 +107,13 @@ export default function Dashboard() {
   }, [loadData]);
 
   useEffect(() => {
+    void loadViolations();
     const interval = setInterval(() => {
       setNowMs(Date.now());
+      void loadViolations();
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [loadViolations]);
 
   const formatCountdown = (seconds: number) => {
     const safeSeconds = Math.max(0, seconds);
@@ -166,7 +177,6 @@ export default function Dashboard() {
       <Header 
         title="Dashboard" 
         subtitle="Monitor parking violations in real-time"
-        autoRefreshNotifications={false}
       />
 
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
